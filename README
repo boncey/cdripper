@@ -1,0 +1,9 @@
+Java project that contains two command line programs.
+
+One to rip a music CD, pulling music info from CDDB.
+
+The other encodes the CD to a variety of formats (currently flac, mp3 and ogg). Encoding is done in parallel to speed things up.
+
+All ripping and encoding is done by executing binaries: cdparanoia cdda2wav flac lame oggenc
+
+It's only ever been used on Linux and may take some work to run on Windows or OS X.
