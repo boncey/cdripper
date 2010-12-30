@@ -7,7 +7,7 @@ package org.boncey.cdripper;
  * @author Darren Greaves
  * @version $Id: OggEncoder.java,v 1.5 2008-11-14 11:48:58 boncey Exp $
  */
-public class OggEncoder extends Encoder
+public class OggEncoder extends AbstractEncoder
 {
     /**
      * Version details.
@@ -15,12 +15,12 @@ public class OggEncoder extends Encoder
     public static final String CVSID =
         "$Id: OggEncoder.java,v 1.5 2008-11-14 11:48:58 boncey Exp $";
 
-    /** 
+    /**
      * The encode command.
      */
     private static final String OGG_CMD = "oggenc";
 
-    /** 
+    /**
      * The file extension for encoded files.
      */
     private static final String EXT = ".ogg";
@@ -36,7 +36,7 @@ public class OggEncoder extends Encoder
         super(encoded, location);
     }
 
-    /** 
+    /**
      * Get the file extension for encoded files.
      * @return the file extension.
      */
@@ -46,7 +46,7 @@ public class OggEncoder extends Encoder
         return EXT;
     }
 
-    /** 
+    /**
      * Get the command to encode.
      * @param track the track to encode.
      * @param encodedFilename the filename to encode to.
@@ -64,9 +64,7 @@ public class OggEncoder extends Encoder
                          "--title=" + track.getTrackName(),
                          "--album=" + track.getAlbum(),
                          "--artist=" + track.getArtist(),
-                         "--genre=" + track.getGenre(),
-                         "--tracknum=" + track.getGenre(),
-                         "--comment=\"YEAR=" + track.getYear() + "\"",
+                         "--tracknum=" + track.getTrackNum(),
                          "-n",
                          encodedFilename,
                          wavFile};

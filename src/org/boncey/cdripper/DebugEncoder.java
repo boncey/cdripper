@@ -1,5 +1,7 @@
 package org.boncey.cdripper;
 
+import java.io.IOException;
+
 
 /**
  * For encoding an audio file to FLAC.
@@ -7,7 +9,7 @@ package org.boncey.cdripper;
  * @author Darren Greaves
  * @version $Id: DebugEncoder.java,v 1.6 2008-11-14 11:48:58 boncey Exp $
  */
-public class DebugEncoder extends Encoder
+public class DebugEncoder extends AbstractEncoder
 {
     /**
      * Version details.
@@ -15,15 +17,11 @@ public class DebugEncoder extends Encoder
     public static final String CVSID =
         "$Id: DebugEncoder.java,v 1.6 2008-11-14 11:48:58 boncey Exp $";
 
-    /** 
-     * The encode command.
-     */
-    private static final String CMD = "/bin/echo ";
 
-    /** 
+    /**
      * The file extension for encoded files.
      */
-    private static final String EXT = ".flac";
+    private static final String EXT = ".debug";
 
     /**
      * Public constructor.
@@ -35,7 +33,7 @@ public class DebugEncoder extends Encoder
         super(encoded, location);
     }
 
-    /** 
+    /**
      * Get the file extension for encoded files.
      * @return the file extension.
      */
@@ -45,7 +43,7 @@ public class DebugEncoder extends Encoder
         return EXT;
     }
 
-    /** 
+    /**
      * Get the command to encode.
      * @param track the track to encode.
      * @param encodedFilename the filename to encode to.
@@ -57,10 +55,18 @@ public class DebugEncoder extends Encoder
                                         String encodedFilename,
                                         String wavFile)
     {
-        String[] args = {CMD,
-                         track.getTrackNum(),
-                         track.getTrackName()};
+        String[] args = {track.getTrackName()};
 
          return args;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean exec(String[] args) throws IOException,
+            InterruptedException
+    {
+        return true;
     }
 }

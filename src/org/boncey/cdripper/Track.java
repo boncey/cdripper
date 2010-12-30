@@ -1,7 +1,6 @@
 package org.boncey.cdripper;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,68 +18,71 @@ public class Track
     public static final String CVSID =
         "$Id: Track.java,v 1.4 2008-11-14 11:48:58 boncey Exp $";
 
-    /** 
+    /**
      * The track's wav file.
      */
     private File _wavFile;
 
-    /** 
+    /**
      * The track name.
      */
     private String _artist;
 
-    /** 
+    /**
      * The track name.
      */
     private String _album;
 
-    /** 
+    /**
      * The track name.
      */
     private String _trackName;
 
-    /** 
-     * The year of the album.
-     */
-    private String _year;
 
-    /** 
-     * The genre of the album.
+    /**
+     * The base path of the Track file, relative to the base path.
      */
-    private String _genre;
+    private String _relativeBasePath;
 
-    /** 
+
+    /**
      * The Pattern for matching the track name without the track number.
      */
     private static final String TRACK_PATTERN = "^(\\d+) (- |)(.+)$";
 
 
     /**
-     * Public constructor.
-     * @param wavFile the file to encode.
-     * @param trackName the track.
-     * @param artist the artist.
-     * @param album the album.
-     * @param cddb the CDDBData.
+     * Create a Track object from the track File.
+     * @param wavFile the track File.
+     * @param ext
      */
-    public Track(File wavFile,
-                 String trackName,
-                 String artist,
-                 String album,
-                 CDDBData cddb)
+    public Track(File wavFile, String ext)
     {
+        File parentFile = wavFile.getParentFile();
+        String trackName = wavFile.getName().replaceFirst(ext, "");
+        String[] parent = parentFile.getName().split(" -", 2);
+        String artist = null;
+        String album = null;
+
+        if (parent.length >= 2)
+        {
+            // cdripper style 'Artist - Album'
+            artist = parent[0].trim();
+            album = parent[1].trim();
+            _relativeBasePath = parentFile.getName();
+        }
+        else
+        {
+            // iTunes style 'Artist/Album'
+            artist = parentFile.getParentFile().getName();
+            album = parentFile.getName();
+            _relativeBasePath = String.format("%s%s%s", artist, File.separator, album);
+        }
+
         _wavFile = wavFile;
         _trackName = trackName;
         _artist = artist;
         _album = album;
-        _genre = cddb.getGenre();
-        _year = cddb.getYear();
-        if (_year == null)
-        {
-            // If no year specified assume current year
-            Calendar cal = Calendar.getInstance();
-            _year = String.valueOf(cal.get(Calendar.YEAR));
-        }
     }
 
     /**
@@ -116,19 +118,7 @@ public class Track
      */
     public String getTrackName()
     {
-        Pattern trackPattern = Pattern.compile(TRACK_PATTERN);
-        String ret;
-        Matcher m = trackPattern.matcher(_trackName);
-        if (m.matches())
-        {
-            ret = m.group(3);
-        }
-        else
-        {
-            throw new RuntimeException("Unable to parse name from " + _trackName);
-        }
-
-        return ret;
+        return parseTrackName(3, "name");
     }
 
     /**
@@ -137,16 +127,27 @@ public class Track
      */
     public String getTrackNum()
     {
+        return parseTrackName(1, "number");
+    }
+
+    /**
+     * Parse the required field from the track name.
+     * @param group
+     * @param field
+     * @return
+     */
+    private String parseTrackName(int group, String field)
+    {
         Pattern trackPattern = Pattern.compile(TRACK_PATTERN);
         String ret;
         Matcher m = trackPattern.matcher(_trackName);
         if (m.matches())
         {
-            ret = m.group(1);
+            ret = m.group(group);
         }
         else
         {
-            throw new RuntimeException("Unable to parse number from " + _trackName);
+            throw new RuntimeException(String.format("Unable to parse %s from %s", field, _trackName));
         }
 
         return ret;
@@ -189,20 +190,41 @@ public class Track
     }
 
     /**
-     * Get the year of the playlist.
-     * @return The year of the playlist.
+     * Get the relativeBasePath.
+     * @return the relativeBasePath.
      */
-    public String getYear()
+    public String getRelativeBasePath()
     {
-        return _year;
+        return _relativeBasePath;
     }
 
     /**
-     * Get the genre of the playlist.
-     * @return The genre of the playlist.
+     * Construct the filename for the encoded file.
+     * @param basePath
+     * @param extension
+     * @return the newly created filename.
      */
-    public String getGenre()
+    public File constructFilename(String basePath, String extension)
     {
-        return _genre;
+        File wavFile = getWavFile();
+        StringBuffer trackName = new StringBuffer();
+        String wavFilename = wavFile.getName();
+        int dot = wavFilename.lastIndexOf(".");
+        if (dot != -1)
+        {
+            trackName.append(basePath);
+            trackName.append("/");
+            trackName.append(getRelativeBasePath());
+            trackName.append("/");
+            trackName.append(wavFilename.substring(0, dot));
+            trackName.append(extension);
+        }
+        else
+        {
+            throw new IllegalArgumentException(
+                    wavFile + " does not have a file extension");
+        }
+
+        return new File(trackName.toString());
     }
 }

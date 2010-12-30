@@ -7,7 +7,7 @@ package org.boncey.cdripper;
  * @author Darren Greaves
  * @version $Id: FlacEncoder.java,v 1.6 2008-11-14 11:48:58 boncey Exp $
  */
-public class FlacEncoder extends Encoder
+public class FlacEncoder extends AbstractEncoder
 {
     /**
      * Version details.
@@ -15,12 +15,12 @@ public class FlacEncoder extends Encoder
     public static final String CVSID =
         "$Id: FlacEncoder.java,v 1.6 2008-11-14 11:48:58 boncey Exp $";
 
-    /** 
+    /**
      * The encode command.
      */
     private static final String FLAC_CMD = "flac";
 
-    /** 
+    /**
      * The file extension for encoded files.
      */
     private static final String EXT = ".flac";
@@ -35,7 +35,7 @@ public class FlacEncoder extends Encoder
         super(encoded, location);
     }
 
-    /** 
+    /**
      * Get the file extension for encoded files.
      * @return the file extension.
      */
@@ -45,7 +45,7 @@ public class FlacEncoder extends Encoder
         return EXT;
     }
 
-    /** 
+    /**
      * Get the command to encode.
      * @param track the track to encode.
      * @param encodedFilename the filename to encode to.
@@ -66,10 +66,6 @@ public class FlacEncoder extends Encoder
                          "album=" + track.getAlbum(),
                          "--tag",
                          "artist=" + track.getArtist(),
-                         "--tag",
-                         "genre=" + track.getGenre(),
-                         "--tag",
-                         "year=" + track.getYear(),
                          "--tag",
                          "tracknumber=" + track.getTrackNum(),
                          "-o",

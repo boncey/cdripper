@@ -7,7 +7,7 @@ package org.boncey.cdripper;
  * @author Darren Greaves
  * @version $Id: Mp3Encoder.java,v 1.2 2008-11-14 11:48:58 boncey Exp $
  */
-public class Mp3Encoder extends Encoder
+public class Mp3Encoder extends AbstractEncoder
 {
     /**
      * Version details.
@@ -15,12 +15,12 @@ public class Mp3Encoder extends Encoder
     public static final String CVSID =
         "$Id: Mp3Encoder.java,v 1.2 2008-11-14 11:48:58 boncey Exp $";
 
-    /** 
+    /**
      * The encode command.
      */
     private static final String MP3_CMD = "lame";
 
-    /** 
+    /**
      * The file extension for encoded files.
      */
     private static final String EXT = ".mp3";
@@ -36,7 +36,7 @@ public class Mp3Encoder extends Encoder
         super(encoded, location);
     }
 
-    /** 
+    /**
      * Get the file extension for encoded files.
      * @return the file extension.
      */
@@ -46,7 +46,7 @@ public class Mp3Encoder extends Encoder
         return EXT;
     }
 
-    /** 
+    /**
      * Get the command to encode.
      * @param track the track to encode.
      * @param encodedFilename the filename to encode to.
@@ -65,7 +65,7 @@ public class Mp3Encoder extends Encoder
                          "-b",
                          "192",
                          "--add-id3v2",
-                         "--tt", 
+                         "--tt",
                          track.getTrackName(),
                          "--tt",
                          track.getTrackName(),
@@ -73,8 +73,6 @@ public class Mp3Encoder extends Encoder
                          track.getAlbum(),
                          "--ta",
                          track.getArtist(),
-                         "--ty",
-                         track.getYear(),
                          "--tn",
                          track.getTrackNum(),
                          wavFile,

@@ -1,16 +1,10 @@
 package org.boncey.cdripper;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * For managing a queue of Encoders, flac, ogg etc.
@@ -18,18 +12,13 @@ import java.util.Properties;
  * @author Darren Greaves
  * @version $Id: EncoderQueue.java,v 1.5 2008-11-14 11:48:58 boncey Exp $
  */
-public class EncoderQueue implements Encoded
+public class EncoderQueue
 {
     /**
      * Version details.
      */
     public static final String CVSID =
         "$Id: EncoderQueue.java,v 1.5 2008-11-14 11:48:58 boncey Exp $";
-
-    /**
-     * The List of Tracks to encode.
-     */
-    private Map<File, Integer> _tracks;
 
     /**
      * The List of Encoders that can encode.
@@ -41,10 +30,11 @@ public class EncoderQueue implements Encoded
      */
     private File _baseDir;
 
+
     /**
-     * The CDDB info held for each different album.
+     * The {@link TrackMonitor} to monitor tracks being encoded.
      */
-    private Map<File, CDDBData> _cddbInfoAlbums;
+    private TrackMonitor _monitor;
 
 
     /**
@@ -52,168 +42,41 @@ public class EncoderQueue implements Encoded
      */
     public static final String WAV_EXT = ".wav";
 
-    /**
-     * The file name for CDDB info.
-     */
-    public static final String CDDB_FILE = "audio.cddb";
-
-
-    /**
-     * The key for the encoder class in the properties file.
-     */
-    private static final String ENCODER_CLASS_KEY = "encoder.class";
-
-
-    /**
-     * The key for the encoder location in the properties file.
-     */
-    private static final String ENCODER_LOCATION_KEY = "encoder.location";
 
     /**
      * Public constructor.
      * @param baseDir the base directory to read the raw files from.
-     * @param properties the details of the Encoders.
+     * @param encoders the List of {@link Encoder}s.
+     * @param monitor
      * @throws IOException if there was an IO problem.
      */
-    public EncoderQueue(File baseDir, File properties)
+    public EncoderQueue(File baseDir, List<Encoder> encoders, TrackMonitor monitor)
         throws IOException
     {
+        _monitor = monitor;
+        _encoders = encoders;
         _baseDir = baseDir;
-        _cddbInfoAlbums = new HashMap<File, CDDBData>();
-        _tracks = new HashMap<File, Integer>();
-        _encoders = new ArrayList<Encoder>();
 
         List<File> files = findRawFiles(_baseDir);
         Collections.sort(files);
 
         if (files.size() > 0)
         {
-            initEncoders(properties);
 
             for (File file : files)
             {
-                File parent = file.getParentFile();
-
-                CDDBData cddb = _cddbInfoAlbums.get(parent);
-                if (cddb == null)
-                {
-                    cddb = new CDDBData(new File(parent, CDDB_FILE));
-                    _cddbInfoAlbums.put(parent, cddb);
-                }
-
-                assert (cddb != null);
-
-                Track track = getTrackInfo(file, cddb);
+                Track track = new Track(file, WAV_EXT);
                 queue(track);
             }
 
             shutdown();
         }
-    }
-
-
-    /**
-     * Read the Encoders from the properties file.
-     * @param propFile the details of the Encoders.
-     * @throws IOException if there was an IO problem.
-     *
-     */
-    private void initEncoders(File propFile)
-        throws IOException
-    {
-        Properties properties = new Properties();
-        properties.load(new FileInputStream(propFile));
-
-        for (Object entry : properties.keySet())
-        {
-            String key = String.valueOf(entry);
-            String value = properties.getProperty(key);
-
-            if (key.startsWith(ENCODER_CLASS_KEY))
-            {
-                try
-                {
-                    int lastDot = key.lastIndexOf('.');
-                    if (lastDot == -1)
-                    {
-                        throw new RuntimeException("Invalid format for entry " + key);
-                    }
-
-                    String label = key.substring(lastDot);
-                    String locationKey = ENCODER_LOCATION_KEY + label;
-                    String location = (String)properties.get(locationKey);
-                    if (location == null)
-                    {
-                        throw new RuntimeException("No value for key " + locationKey);
-                    }
-
-                    Class<?> encoderClass = Class.forName(value);
-                    Constructor<?> c = encoderClass.getConstructor(Encoded.class, String.class);
-                    Encoder encoder = (Encoder)c.newInstance(this, location);
-                    Thread thread = new Thread(encoder, label);
-                    thread.start();
-                    _encoders.add(encoder);
-
-                }
-                catch (ClassNotFoundException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (InstantiationException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (IllegalAccessException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (SecurityException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (NoSuchMethodException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (IllegalArgumentException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (InvocationTargetException e)
-                {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-    }
-
-    /**
-     * Create a Track object from the track File.
-     * @param file the track File.
-     * @param cddb the CDDBData object.
-     * @return the Track object.
-     */
-    private Track getTrackInfo(File file, CDDBData cddb)
-    {
-        String trackName = file.getName().replaceFirst(WAV_EXT, "");
-        String[] parent = file.getParentFile().getName().split(" -", 2);
-        String artist = null;
-        String album = null;
-
-        if (parent.length >= 2)
-        {
-            artist = parent[0].trim();
-            album = parent[1].trim();
-        }
         else
         {
-            System.err.println("Unable to match artist/album from " +
-                    file.getParentFile().getName());
+            System.err.println("No wav files found in " + baseDir);
         }
-
-        return new Track(file, trackName, artist, album, cddb);
     }
+
 
     /**
      * Find any files that require encoding.
@@ -227,9 +90,8 @@ public class EncoderQueue implements Encoded
         File[] fileArray = dir.listFiles();
         if (fileArray != null)
         {
-            for (int i = 0; i < fileArray.length; i++)
+            for (File file : fileArray)
             {
-                File file = fileArray[i];
                 String filename = file.getName();
                 if (file.isDirectory() && !filename.startsWith("."))
                 {
@@ -251,7 +113,7 @@ public class EncoderQueue implements Encoded
      */
     public void queue(Track track)
     {
-        _tracks.put(track.getWavFile(), new Integer(_encoders.size()));
+        _monitor.monitor(track.getWavFile(), _encoders.size());
 
         for (Encoder encoder : _encoders)
         {
@@ -271,44 +133,8 @@ public class EncoderQueue implements Encoded
     }
 
     /**
-     * Mark the file as successfully encoded.
-     * <p>Delete if all encodings have finished.
-     * @param wavFile the file that was encoded.
-     */
-    public synchronized void encoded(File wavFile)
-    {
-        Integer num = _tracks.get(wavFile);
-        if (num != null)
-        {
-            int number = num.intValue();
-            number--;
-
-            if (number == 0)
-            {
-                if (wavFile.delete())
-                {
-                    System.out.println("Deleted " + wavFile.getName());
-                }
-                else
-                {
-                    System.err.println("Unable to delete " + wavFile);
-                }
-            }
-            else
-            {
-                _tracks.put(wavFile, new Integer(number));
-            }
-        }
-        else
-        {
-            System.err.println(
-                    "Unable to locate " + wavFile + " in tracks map");
-        }
-    }
-
-    /**
      * Search for unencoded tracks and encode accordingly.
-     * @param args the base dir.
+     * @param args the base directory.
      */
     public static void main(String[] args)
     {
@@ -335,8 +161,9 @@ public class EncoderQueue implements Encoded
 
         try
         {
-            @SuppressWarnings("unused")
-            EncoderQueue encode = new EncoderQueue(baseDir, props);
+            TrackMonitor monitor = new TrackMonitor();
+            List<Encoder> encoders = new EncodersReader().initEncoders(props, monitor);
+            new EncoderQueue(baseDir, encoders, monitor);
         }
         catch (Exception e)
         {
