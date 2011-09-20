@@ -15,10 +15,10 @@ public interface Encoded
     public static final String CVSID =
         "$Id: Encoded.java,v 1.1 2005/05/08 13:59:08 boncey Exp $";
 
-    /** 
-     * Mark the file as successfully encoded.
+    /**
+     * Mark the file as successfully encoded and schedule for deletion.
      * @param rawFile the file that was encoded.
      */
-    public void encoded(File rawFile);
+    public void sucessfullyEncoded(File rawFile);
 }
 

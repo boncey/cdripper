@@ -1,5 +1,7 @@
 package org.boncey.cdripper;
 
+import org.boncey.cdripper.model.CDInfo;
+
 import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.ConsoleAppender;

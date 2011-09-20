@@ -21,7 +21,7 @@
     <property name="project.lib" value="${project.root}/build/lib"/>
     <property name="project.javadocs" value="${project.root}/docs"/>
 
-    <property name="deploy" value="${env.HOME}/bin"/>
+    <property name="deploy" value="${env.HOME}/Dropbox/Scripts/bin"/>
 
     <!-- required for javadoc to split by package -->
     <property name="CDRipper" value="org.boncey.cdripper.*"/>
@@ -38,10 +38,7 @@
         <pathelement location="${doclint.jar}"/>
     </path>
 
-    <target name="build" depends="compile">
-    </target>
-
-    <target name="all" depends="build">
+    <target name="build" depends="jar">
     </target>
 
     <target name="compile" description="Builds the java source">
@@ -51,6 +48,7 @@
                 deprecation="on"
                 source="1.5"
                 optimize="on"
+                includeantruntime="false"
                 excludes="**/generated/**">
             <classpath refid="classpath" />
         </javac>
@@ -101,7 +99,7 @@
         depends="depend, build"/>
 
     <target name="jar" description="Build project into a jar for easier deployment"
-        depends="compiledep">
+        depends="clean, compile">
         <jar jarfile="build/deploy/${project}.jar"
             basedir="${project.classes}"/>
     </target>

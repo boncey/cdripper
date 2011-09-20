@@ -1,4 +1,4 @@
-package org.boncey.cdripper;
+package org.boncey.cdripper.model;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package org.boncey.cdripper;
+package org.boncey.cdripper.model;
 
 import java.io.File;
 import java.util.regex.Matcher;
@@ -46,7 +46,7 @@ public class Track
 
 
     /**
-     * The Pattern for matching the track name without the track number.
+     * The Pattern for matching the track name and track number.
      */
     private static final String TRACK_PATTERN = "^(\\d+) (- |)(.+)$";
 
@@ -76,7 +76,7 @@ public class Track
             // iTunes style 'Artist/Album'
             artist = parentFile.getParentFile().getName();
             album = parentFile.getName();
-            _relativeBasePath = String.format("%s%s%s", artist, File.separator, album);
+            _relativeBasePath = String.format("%s - %s", artist, album);
         }
 
         _wavFile = wavFile;
@@ -147,7 +147,7 @@ public class Track
         }
         else
         {
-            throw new RuntimeException(String.format("Unable to parse %s from %s", field, _trackName));
+            throw new IllegalArgumentException(String.format("Unable to parse %s from %s", field, _trackName));
         }
 
         return ret;
@@ -200,31 +200,15 @@ public class Track
 
     /**
      * Construct the filename for the encoded file.
-     * @param basePath
+     * @param location
      * @param extension
      * @return the newly created filename.
      */
-    public File constructFilename(String basePath, String extension)
+    public File constructFilename(File location, String extension)
     {
-        File wavFile = getWavFile();
-        StringBuffer trackName = new StringBuffer();
-        String wavFilename = wavFile.getName();
-        int dot = wavFilename.lastIndexOf(".");
-        if (dot != -1)
-        {
-            trackName.append(basePath);
-            trackName.append("/");
-            trackName.append(getRelativeBasePath());
-            trackName.append("/");
-            trackName.append(wavFilename.substring(0, dot));
-            trackName.append(extension);
-        }
-        else
-        {
-            throw new IllegalArgumentException(
-                    wavFile + " does not have a file extension");
-        }
+        String filename = String.format("%s - %s", getTrackNum(), getTrackName());
+        File basePath = new File(location, getRelativeBasePath());
 
-        return new File(trackName.toString());
+        return new File(basePath, filename + extension);
     }
 }

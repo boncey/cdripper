@@ -1,5 +1,8 @@
 package org.boncey.cdripper;
 
+import org.boncey.cdripper.encoder.AbstractEncoder;
+import org.boncey.cdripper.encoder.Encoder;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,12 +13,12 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- *
+ * Load the {@link Encoder}s from the properties file.
  * @author Darren Greaves
  * @version $Id$
  * Copyright (c) 2010 Darren Greaves.
  */
-public class EncodersReader
+public class EncoderLoader
 {
 
     /**
@@ -62,14 +65,18 @@ public class EncodersReader
 
                     String label = key.substring(lastDot);
                     String locationKey = ENCODER_LOCATION_KEY + label;
-                    String location = (String)properties.get(locationKey);
+                    File location = new File((String)properties.get(locationKey));
                     if (location == null)
                     {
                         throw new RuntimeException("No value for key " + locationKey);
                     }
+                    if (!location.exists() || !location.isDirectory())
+                    {
+                        throw new RuntimeException("Directory not found: " + locationKey);
+                    }
 
                     Class<?> encoderClass = Class.forName(value);
-                    Constructor<?> c = encoderClass.getConstructor(Encoded.class, String.class);
+                    Constructor<?> c = encoderClass.getConstructor(Encoded.class, File.class);
                     Encoder encoder = (AbstractEncoder)c.newInstance(encoded, location);
                     Thread thread = new Thread(encoder, label);
                     thread.start();
