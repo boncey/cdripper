@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * For managing a queue of Encoders, flac, ogg etc. Copyright (c) 2005 Darren Greaves.
@@ -49,9 +51,21 @@ public class EncoderQueue
 
 
     /**
+     * For cleaning up the empty directories after encoding.
+     */
+    FileSystemCleaner _fileSystemCleaner;
+
+
+    /**
      * The extension for unencoded files.
      */
     public static final String WAV_EXT = ".wav";
+
+
+    /**
+     * Perform a "dry run", don't encode tracks or change file-system.
+     */
+    private final boolean _dryRun;
 
 
     /**
@@ -60,17 +74,20 @@ public class EncoderQueue
      * @param baseDir the base directory to read the raw files from.
      * @param encoders the List of {@link Encoder}s.
      * @param monitor
+     * @param dryRun
      * @throws IOException if there was an IO problem.
      * @throws InterruptedException
      */
-    public EncoderQueue(File baseDir, List<Encoder> encoders, TrackMonitor monitor) throws IOException, InterruptedException
+    public EncoderQueue(File baseDir, List<Encoder> encoders, TrackMonitor monitor, boolean dryRun) throws IOException, InterruptedException
     {
 
+        _fileSystemCleaner = new FileSystemCleaner();
         try
         {
             _monitor = monitor;
             _encoders = encoders;
             _baseDir = baseDir;
+            _dryRun = dryRun;
 
             dependenciesInstalled(encoders);
 
@@ -82,8 +99,11 @@ public class EncoderQueue
 
                 for (File file : files)
                 {
-                    Track track = new Track(file, WAV_EXT);
-                    queue(track);
+                    Track track = Track.createTrack(file, baseDir, WAV_EXT);
+                    if (track != null)
+                    {
+                        queue(track);
+                    }
                 }
             }
             else
@@ -95,6 +115,52 @@ public class EncoderQueue
         {
             shutdown();
         }
+    }
+
+
+    /**
+     * Find any files that require encoding.
+     * 
+     * @param dir the directory to search from.
+     * @return a List of files found.
+     */
+    private List<File> findRawFiles(File dir)
+    {
+
+        List<File> files = new ArrayList<File>();
+
+        File[] fileArray = dir.listFiles();
+        if (fileArray != null)
+        {
+            for (File file : fileArray)
+            {
+                String filename = file.getName();
+                if (file.isDirectory() && !filename.startsWith("."))
+                {
+                    files.addAll(findRawFiles(file));
+                }
+                else if (filename.endsWith(EncoderQueue.WAV_EXT))
+                {
+                    files.add(file);
+                }
+            }
+        }
+
+        return files;
+    }
+
+
+    /**
+     * Clean up empty directories.
+     * 
+     * @param baseDir
+     * @param dryRun
+     * 
+     */
+    private void cleanup(File baseDir, boolean dryRun)
+    {
+
+        _fileSystemCleaner.cleanup(baseDir, dryRun);
     }
 
 
@@ -121,38 +187,6 @@ public class EncoderQueue
 
 
     /**
-     * Find any files that require encoding.
-     * 
-     * @param dir the directory to search from.
-     * @return a List of files found.
-     */
-    private List<File> findRawFiles(File dir)
-    {
-
-        List<File> files = new ArrayList<File>();
-
-        File[] fileArray = dir.listFiles();
-        if (fileArray != null)
-        {
-            for (File file : fileArray)
-            {
-                String filename = file.getName();
-                if (file.isDirectory() && !filename.startsWith("."))
-                {
-                    files.addAll(findRawFiles(file));
-                }
-                else if (filename.endsWith(WAV_EXT))
-                {
-                    files.add(file);
-                }
-            }
-        }
-
-        return files;
-    }
-
-
-    /**
      * Queue this track for encoding.
      * 
      * @param track the track to encode.
@@ -160,11 +194,14 @@ public class EncoderQueue
     public void queue(Track track)
     {
 
-        _monitor.monitor(track.getWavFile(), _encoders.size());
+        if (!_dryRun)
+        {
+            _monitor.monitor(track.getWavFile(), _encoders.size());
+        }
 
         for (Encoder encoder : _encoders)
         {
-            encoder.queue(track);
+            encoder.queue(track, _dryRun);
             _tracksEncoded++;
         }
     }
@@ -206,29 +243,43 @@ public class EncoderQueue
 
         if (args.length < 2)
         {
-            System.err.println("Usage: Encode <base dir> <encoder properties>");
-            System.exit(-1);
+            usage();
         }
 
-        File baseDir = new File(args[0]);
-        File props = new File(args[1]);
+        int argIndex = 0;
+        boolean dryRun = false;
+        if (args.length == 3)
+        {
+            dryRun = "--dry-run".equals(args[argIndex++]);
+        }
+
+        File baseDir = new File(args[argIndex++]);
+        File props = new File(args[argIndex++]);
         if (!baseDir.canRead() || !baseDir.isDirectory())
         {
             System.err.println("Unable to access " + baseDir + " as a directory");
-            System.exit(-1);
+            usage();
         }
         if (!props.canRead())
         {
             System.err.println("Unable to access " + props);
-            System.exit(-1);
+            usage();
         }
 
         try
         {
             TrackMonitor monitor = new TrackMonitor();
-            List<Encoder> encoders = new EncoderLoader().initEncoders(props, monitor);
-            EncoderQueue encoderQueue = new EncoderQueue(baseDir, encoders, monitor);
+            List<Encoder> encoders = new EncoderLoader().loadEncoders(props, monitor);
+            ExecutorService executor = executeEncoders(encoders);
+            EncoderQueue encoderQueue = new EncoderQueue(baseDir, encoders, monitor, dryRun);
+            executor.shutdown();
 
+            while (!executor.isTerminated())
+            {
+
+            }
+
+            encoderQueue.cleanup(baseDir, dryRun);
             if (encoderQueue.getTracksEncoded() == 0)
             {
                 // Return -1 so we don't trigger success notifications in any caller
@@ -243,5 +294,36 @@ public class EncoderQueue
         {
             e.printStackTrace();
         }
+    }
+
+
+    /**
+     * Start the encoder threads.
+     * 
+     * @param encoders
+     * @return
+     */
+    private static ExecutorService executeEncoders(List<Encoder> encoders)
+    {
+
+        ExecutorService executor = Executors.newFixedThreadPool(encoders.size());
+
+        for (Encoder encoder : encoders)
+        {
+            executor.execute(encoder);
+        }
+
+        return executor;
+    }
+
+
+    /**
+     * 
+     */
+    private static void usage()
+    {
+
+        System.err.println("Usage: Encode [--dry-run] <base dir> <encoder properties>");
+        System.exit(-1);
     }
 }

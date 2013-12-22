@@ -75,8 +75,8 @@ public class Mp3Encoder extends AbstractEncoder
 
         String[] args =
         {
-                MP3_CMD, "--quiet", "--vbr-new", "-h", "-b", "192", "--add-id3v2", "--tt", track.getTrackName(), "--tt", track.getTrackName(), "--tl",
-                track.getAlbum(), "--ta", track.getArtist(), "--tn", track.getTrackNum(), wavFile, encodedFilename
+                MP3_CMD, "--quiet", "--vbr-new", "-h", "-b", "192", "--add-id3v2", "--tt", track.getTrackName(), "--tl", track.getAlbum(), "--ta",
+                track.getArtist(), "--tn", track.getTrackNum(), wavFile, encodedFilename
         };
 
         return args;

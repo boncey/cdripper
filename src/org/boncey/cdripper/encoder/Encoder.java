@@ -18,8 +18,9 @@ public interface Encoder extends Runnable
      * Queue this track for encoding.
      * 
      * @param track the track to encode.
+     * @param dryRun
      */
-    void queue(Track track);
+    void queue(Track track, boolean dryRun);
 
 
     /**

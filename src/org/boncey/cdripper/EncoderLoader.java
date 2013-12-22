@@ -1,5 +1,6 @@
 package org.boncey.cdripper;
 
+
 import org.boncey.cdripper.encoder.AbstractEncoder;
 import org.boncey.cdripper.encoder.Encoder;
 
@@ -14,9 +15,9 @@ import java.util.Properties;
 
 /**
  * Load the {@link Encoder}s from the properties file.
+ * 
  * @author Darren Greaves
- * @version $Id$
- * Copyright (c) 2010 Darren Greaves.
+ * @version $Id$ Copyright (c) 2010 Darren Greaves.
  */
 public class EncoderLoader
 {
@@ -35,15 +36,16 @@ public class EncoderLoader
 
     /**
      * Read the Encoders from the properties file.
+     * 
      * @param propFile the details of the Encoders.
      * @param encoded the {@link Encoded} implementation to track files being encoded.
      * @return the Set of {@link Encoder}s.
      * @throws IOException if there was an IO problem.
-     *
+     * 
      */
-    public List<Encoder> initEncoders(File propFile, Encoded encoded)
-        throws IOException
+    public List<Encoder> loadEncoders(File propFile, Encoded encoded) throws IOException
     {
+
         Properties properties = new Properties();
         properties.load(new FileInputStream(propFile));
 
@@ -78,10 +80,8 @@ public class EncoderLoader
                     Class<?> encoderClass = Class.forName(value);
                     Constructor<?> c = encoderClass.getConstructor(Encoded.class, File.class);
                     Encoder encoder = (AbstractEncoder)c.newInstance(encoded, location);
-                    Thread thread = new Thread(encoder, label);
-                    thread.start();
-                    encoders.add(encoder);
 
+                    encoders.add(encoder);
                 }
                 catch (ClassNotFoundException e)
                 {
