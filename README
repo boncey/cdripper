@@ -6,4 +6,9 @@ The other encodes the CD to a variety of formats (currently flac, mp3 and ogg). 
 
 All ripping and encoding is done by executing binaries: cdparanoia cdda2wav flac lame oggenc
 
-It's only ever been used on Linux and may take some work to run on Windows or OS X.
+This is for ripping on OSX, see master branch for Linux.
+
+Setting up the tools (assumes homebrew usage).
+
+    brew update
+    brew install cdrtools cdparanoia libcddb libcdio flac lame
