@@ -1,12 +1,8 @@
 package org.boncey.cdripper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.boncey.cdripper.model.CDInfo;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -33,7 +29,7 @@ public class CDRipper
     /**
      * Log4j logger.
      */
-    private static Logger _log;
+    private static Logger _log = LoggerFactory.getLogger(CDRipper.class);
 
 
     /**
@@ -336,8 +332,6 @@ public class CDRipper
     public static void main(String[] args)
     {
 
-        configureLogging();
-
         if (args.length < 1)
         {
             System.err.println("Usage: CDRipper <base dir>");
@@ -362,19 +356,4 @@ public class CDRipper
             e.printStackTrace();
         }
     }
-
-
-    /**
-     * Configure log4j before we use the logger in this class.
-     */
-    private static void configureLogging()
-    {
-        PatternLayout layout = new PatternLayout(
-                "%m%n");
-        Appender app = new ConsoleAppender(layout);
-        BasicConfigurator.configure(app);
-
-        _log = Logger.getLogger(CDRipper.class);
-    }
-
 }
