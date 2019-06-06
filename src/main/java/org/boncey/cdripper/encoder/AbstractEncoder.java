@@ -56,6 +56,12 @@ public abstract class AbstractEncoder implements Encoder
 
 
     /**
+     * Perform a "dry run", don't encode tracks or change file-system.
+     */
+    private boolean _dryRun;
+
+
+    /**
      * Public constructor.
      * 
      * @param encoded the class to notify once encoding is finished.
@@ -88,7 +94,10 @@ public abstract class AbstractEncoder implements Encoder
                     File wavFile = track.getWavFile();
                     if (encode(track))
                     {
-                        _encoded.sucessfullyEncoded(wavFile);
+                        if (!isDryRun())
+                        {
+                            _encoded.sucessfullyEncoded(wavFile);
+                        }
                     }
                     else
                     {
@@ -118,10 +127,23 @@ public abstract class AbstractEncoder implements Encoder
     /**
      * {@inheritDoc}
      */
-    public void queue(Track track)
+    public void queue(Track track, boolean dryRun)
     {
 
+        _dryRun = dryRun;
         _tracks.add(track);
+    }
+
+
+    /**
+     * Is this a dry run?
+     * 
+     * @return the dryRun.
+     */
+    protected boolean isDryRun()
+    {
+
+        return _dryRun;
     }
 
 
@@ -152,11 +174,27 @@ public abstract class AbstractEncoder implements Encoder
 
         System.out.println(String.format("Encoding (%s) %s to %s", track.getRelativeBasePath(), wavFile.getName(), destFile.getName()));
 
-        File tempDest = File.createTempFile("dest-", null, wavFile.getParentFile());
+        File tempDest;
+        if (isDryRun())
+        {
+            tempDest = new File("tmpFile");
+        }
+        else
+        {
+            tempDest = File.createTempFile("dest-", null, wavFile.getParentFile());
+        }
         try
         {
             String[] args = getEncodeCommand(track, tempDest.toString(), wavFile.getAbsolutePath());
-            success = exec(args);
+            if (isDryRun())
+            {
+                System.out.println(String.format("Execing '%s'", getCommandArgs(args)));
+                success = true;
+            }
+            else
+            {
+                success = exec(args);
+            }
         }
         catch (IllegalArgumentException e)
         {
@@ -164,7 +202,7 @@ public abstract class AbstractEncoder implements Encoder
             success = false;
         }
 
-        if (success)
+        if (success && !isDryRun())
         {
             File parentDir = destFile.getParentFile();
             parentDir.mkdirs();
@@ -173,12 +211,31 @@ public abstract class AbstractEncoder implements Encoder
                 System.err.println("Unable to rename " + tempDest.getName() + " to " + destFile.getName());
             }
         }
-        else
+        else if (!isDryRun())
         {
             tempDest.delete();
         }
 
         return success;
+    }
+
+
+    /**
+     * 
+     * @param args
+     * @return
+     */
+    private String getCommandArgs(String[] args)
+    {
+
+        StringBuilder commandArgs = new StringBuilder();
+        for (String arg : args)
+        {
+            commandArgs.append(arg);
+            commandArgs.append(" ");
+        }
+
+        return commandArgs.toString().trim();
     }
 
 

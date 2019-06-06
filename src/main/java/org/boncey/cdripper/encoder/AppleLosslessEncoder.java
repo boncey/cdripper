@@ -8,40 +8,40 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * For encoding an audio file to MP3.
- * 
+ * For encoding an audio file to Apple Lossless.
+ *
  * Copyright (c) 2000-2005 Darren Greaves.
  * 
  * @author Darren Greaves
- * @version $Id: Mp3Encoder.java,v 1.2 2008-11-14 11:48:58 boncey Exp $
+ * @version $Id: FlacEncoder.java,v 1.6 2008-11-14 11:48:58 boncey Exp $
  */
-public class Mp3Encoder extends AbstractEncoder
+public class AppleLosslessEncoder extends AbstractEncoder
 {
     /**
      * Version details.
      */
-    public static final String CVSID = "$Id: Mp3Encoder.java,v 1.2 2008-11-14 11:48:58 boncey Exp $";
+    public static final String CVSID = "$Id: FlacEncoder.java,v 1.6 2008-11-14 11:48:58 boncey Exp $";
 
 
     /**
      * The encode command.
      */
-    private static final String MP3_CMD = "lame";
+    private static final String CMD = "ffmpeg";
 
 
     /**
      * The file extension for encoded files.
      */
-    private static final String EXT = ".mp3";
+    private static final String EXT = ".m4a";
 
 
     /**
      * Public constructor.
-     * 
+     *
      * @param encoded the class to notify once encoding is finished.
      * @param location the location to save the files to.
      */
-    public Mp3Encoder(Encoded encoded, File location)
+    public AppleLosslessEncoder(Encoded encoded, File location)
     {
 
         super(encoded, location);
@@ -72,11 +72,12 @@ public class Mp3Encoder extends AbstractEncoder
     @Override
     protected String[] getEncodeCommand(Track track, String encodedFilename, String wavFile)
     {
+        //       run("ffmpeg -y -loglevel warning -i \"#{alac}\" -c:a libfdk_aac -b:a 320k -c:v copy \"#{tmpfile.path}\"")
 
         String[] args =
         {
-                MP3_CMD, "--quiet", "--vbr-new", "-h", "-b", "192", "--add-id3v2", "--tt", track.getTrackName(), "--tl", track.getAlbum(), "--ta",
-                track.getArtist(), "--tn", track.getTrackNum(), wavFile, encodedFilename
+                CMD, "-y", "-metadata", "title=" + track.getTrackName(), "-metadata", "album=" + track.getAlbum(), "-metadata",
+                "artist=" + track.getArtist(), "-metadata", "tracknumber=" + track.getTrackNum(), "-i", wavFile, "-c:a", "alac", encodedFilename
         };
 
         return args;
@@ -85,6 +86,9 @@ public class Mp3Encoder extends AbstractEncoder
 
     /**
      * {@inheritDoc}
+     * 
+     * @throws InterruptedException
+     * @throws IOException
      */
     @Override
     public boolean dependenciesInstalled() throws IOException, InterruptedException
@@ -92,7 +96,7 @@ public class Mp3Encoder extends AbstractEncoder
 
         return exec(new String[]
         {
-                MP3_CMD, "--help"
+                CMD, "-version"
         });
     }
 
@@ -104,6 +108,7 @@ public class Mp3Encoder extends AbstractEncoder
     public String command()
     {
 
-        return MP3_CMD;
+        return CMD;
     }
+
 }
