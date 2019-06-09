@@ -40,7 +40,7 @@ public class FileSystemCleaner
     private void cleanup(File baseDir, File dir, boolean dryRun)
     {
 
-        List<File> subdirs = new ArrayList<File>(Arrays.asList(dir.listFiles(new DirectoryFilter())));
+        List<File> subdirs = new ArrayList<>(Arrays.asList(dir.listFiles(new DirectoryFilter())));
         if (subdirs.isEmpty())
         {
             deleteEmptyDirectory(baseDir, dir, dryRun);
@@ -48,7 +48,7 @@ public class FileSystemCleaner
         else
         {
 
-            List<File> deepSubdirs = new ArrayList<File>();
+            List<File> deepSubdirs = new ArrayList<>();
             for (File subdir : subdirs)
             {
                 cleanup(baseDir, subdir, dryRun);

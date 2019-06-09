@@ -8,8 +8,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 /**
  * Abstract parent class for encoding an audio file. Copyright (c) 2000-2005 Darren Greaves.
@@ -96,7 +98,7 @@ public abstract class AbstractEncoder implements Encoder
                     {
                         if (!isDryRun())
                         {
-                            _encoded.sucessfullyEncoded(wavFile);
+                            _encoded.successfullyEncoded(wavFile);
                         }
                     }
                     else
@@ -181,7 +183,7 @@ public abstract class AbstractEncoder implements Encoder
         }
         else
         {
-            tempDest = File.createTempFile("dest-", null, wavFile.getParentFile());
+            tempDest = File.createTempFile("dest-", getTempFileSuffix(), wavFile.getParentFile());
         }
         try
         {
@@ -219,6 +221,7 @@ public abstract class AbstractEncoder implements Encoder
         return success;
     }
 
+    protected abstract String getTempFileSuffix();
 
     /**
      * 
@@ -227,15 +230,7 @@ public abstract class AbstractEncoder implements Encoder
      */
     private String getCommandArgs(String[] args)
     {
-
-        StringBuilder commandArgs = new StringBuilder();
-        for (String arg : args)
-        {
-            commandArgs.append(arg);
-            commandArgs.append(" ");
-        }
-
-        return commandArgs.toString().trim();
+        return Arrays.stream(args).collect(Collectors.joining(" "));
     }
 
 

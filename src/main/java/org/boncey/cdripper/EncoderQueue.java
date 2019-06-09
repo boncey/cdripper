@@ -45,15 +45,15 @@ public class EncoderQueue
 
 
     /**
-     * The {@link TrackMonitor} to monitor tracks being encoded.
+     * The {@link Encoded} implementation to monitor tracks being encoded.
      */
-    private final TrackMonitor _monitor;
+    private final Encoded _monitor;
 
 
     /**
      * For cleaning up the empty directories after encoding.
      */
-    FileSystemCleaner _fileSystemCleaner;
+    private FileSystemCleaner _fileSystemCleaner;
 
 
     /**
@@ -78,7 +78,7 @@ public class EncoderQueue
      * @throws IOException if there was an IO problem.
      * @throws InterruptedException
      */
-    public EncoderQueue(File baseDir, List<Encoder> encoders, TrackMonitor monitor, boolean dryRun) throws IOException, InterruptedException
+    public EncoderQueue(File baseDir, List<Encoder> encoders, Encoded monitor, boolean dryRun) throws IOException, InterruptedException
     {
 
         _fileSystemCleaner = new FileSystemCleaner();
@@ -127,7 +127,7 @@ public class EncoderQueue
     private List<File> findRawFiles(File dir)
     {
 
-        List<File> files = new ArrayList<File>();
+        List<File> files = new ArrayList<>();
 
         File[] fileArray = dir.listFiles();
         if (fileArray != null)
@@ -268,16 +268,11 @@ public class EncoderQueue
 
         try
         {
-            TrackMonitor monitor = new TrackMonitor();
+            Encoded monitor = new FileDeletingTrackMonitor();
             List<Encoder> encoders = new EncoderLoader().loadEncoders(props, monitor);
             ExecutorService executor = executeEncoders(encoders);
             EncoderQueue encoderQueue = new EncoderQueue(baseDir, encoders, monitor, dryRun);
             executor.shutdown();
-
-            while (!executor.isTerminated())
-            {
-
-            }
 
             encoderQueue.cleanup(baseDir, dryRun);
             if (encoderQueue.getTracksEncoded() == 0)

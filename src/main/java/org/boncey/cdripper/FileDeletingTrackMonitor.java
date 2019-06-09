@@ -1,62 +1,55 @@
 package org.boncey.cdripper;
 
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Monitor to count tracks that have been encoded.
- * 
+ *
  * @author Darren Greaves
  * @version $Id$ Copyright (c) 2010 Darren Greaves.
  */
-public class TrackMonitor implements Encoded
+public class FileDeletingTrackMonitor implements Encoded
 {
 
     /**
-     * The count of tracks queued, once the count reaches zero the original file will be deleted.
+     * The count of tracks queued, once the count reaches zero the original file can be deleted.
      */
-    private final Map<File, Integer> _trackCount;
-
+    private final Map<File, AtomicInteger> _trackCount;
 
     /**
      * Default constructor.
      */
-    public TrackMonitor()
+    public FileDeletingTrackMonitor()
     {
-
-        _trackCount = new HashMap<File, Integer>();
+        _trackCount = new HashMap<>();
     }
-
 
     /**
      * Add a track to the queue we are monitoring.
-     * 
-     * @param wavFile the file to monitor.
+     *
+     * @param wavFile      the file to monitor.
      * @param encoderCount the number of encoders, once this reaches zero file will be deleted.
      */
     public synchronized void monitor(File wavFile, int encoderCount)
     {
-
-        _trackCount.put(wavFile, new Integer(encoderCount));
+        _trackCount.put(wavFile, new AtomicInteger(encoderCount));
     }
-
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public synchronized void sucessfullyEncoded(File rawFile)
+    public synchronized void successfullyEncoded(File rawFile)
     {
-
-        Integer num = _trackCount.get(rawFile);
+        AtomicInteger num = _trackCount.get(rawFile);
         if (num != null)
         {
-            int number = num.intValue();
-            number--;
+            num.decrementAndGet();
 
-            if (number == 0)
+            if (num.intValue() == 0)
             {
                 boolean deleted = rawFile.delete();
                 if (deleted)
@@ -68,14 +61,10 @@ public class TrackMonitor implements Encoded
                     System.err.println("Unable to delete " + rawFile);
                 }
             }
-            else
-            {
-                _trackCount.put(rawFile, new Integer(number));
-            }
         }
         else
         {
-            System.err.println("Unable to locate " + rawFile + " in tracks map");
+            System.err.println(String.format("Unable to locate '%s' in tracks map", rawFile));
         }
     }
 }

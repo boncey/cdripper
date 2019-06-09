@@ -13,7 +13,7 @@ import java.io.File;
  * @author Darren Greaves
  * @version $Id: FlacEncoder.java,v 1.6 2008-11-14 11:48:58 boncey Exp $
  */
-public class AppleLosslessEncoder extends AppleEncoder
+public class AppleLossyEncoder extends AppleEncoder
 {
     /**
      * Public constructor.
@@ -21,7 +21,7 @@ public class AppleLosslessEncoder extends AppleEncoder
      * @param encoded the class to notify once encoding is finished.
      * @param location the location to save the files to.
      */
-    public AppleLosslessEncoder(Encoded encoded, File location)
+    public AppleLossyEncoder(Encoded encoded, File location)
     {
         super(encoded, location);
     }
@@ -29,7 +29,7 @@ public class AppleLosslessEncoder extends AppleEncoder
     @Override
     protected String getCodecName()
     {
-        return "libfdk_aac";
+        return "alac";
     }
 
 }

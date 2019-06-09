@@ -4,3 +4,4 @@ depcache
 .idea
 *.iml
 target
+deploy.sh

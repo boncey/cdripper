@@ -45,6 +45,11 @@ public class FlacEncoder extends AbstractEncoder
         super(encoded, location);
     }
 
+    @Override
+    protected String getTempFileSuffix()
+    {
+        return ".flac";
+    }
 
     /**
      * Get the file extension for encoded files.

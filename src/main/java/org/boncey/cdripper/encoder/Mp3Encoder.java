@@ -47,6 +47,11 @@ public class Mp3Encoder extends AbstractEncoder
         super(encoded, location);
     }
 
+    @Override
+    protected String getTempFileSuffix()
+    {
+        return ".mp3";
+    }
 
     /**
      * Get the file extension for encoded files.

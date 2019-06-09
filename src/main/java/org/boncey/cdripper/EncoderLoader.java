@@ -1,6 +1,5 @@
 package org.boncey.cdripper;
 
-
 import org.boncey.cdripper.encoder.AbstractEncoder;
 import org.boncey.cdripper.encoder.Encoder;
 
@@ -8,7 +7,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -49,7 +47,7 @@ public class EncoderLoader
         Properties properties = new Properties();
         properties.load(new FileInputStream(propFile));
 
-        List<Encoder> encoders = new ArrayList<Encoder>();
+        List<Encoder> encoders = new ArrayList<>();
         for (Object entry : properties.keySet())
         {
             String key = String.valueOf(entry);
@@ -83,31 +81,7 @@ public class EncoderLoader
 
                     encoders.add(encoder);
                 }
-                catch (ClassNotFoundException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (InstantiationException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (IllegalAccessException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (SecurityException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (NoSuchMethodException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (IllegalArgumentException e)
-                {
-                    throw new RuntimeException(e);
-                }
-                catch (InvocationTargetException e)
+                catch (Exception e)
                 {
                     throw new RuntimeException(e);
                 }
