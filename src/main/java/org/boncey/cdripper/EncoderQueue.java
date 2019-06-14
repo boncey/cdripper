@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * For managing a queue of Encoders, flac, ogg etc. Copyright (c) 2005 Darren Greaves.
@@ -272,6 +273,7 @@ public class EncoderQueue
             List<Encoder> encoders = new EncoderLoader().loadEncoders(props, monitor);
             ExecutorService executor = executeEncoders(encoders);
             EncoderQueue encoderQueue = new EncoderQueue(baseDir, encoders, monitor, dryRun);
+            executor.awaitTermination(30, TimeUnit.MINUTES);
             executor.shutdown();
 
             encoderQueue.cleanup(baseDir, dryRun);
@@ -300,7 +302,6 @@ public class EncoderQueue
      */
     private static ExecutorService executeEncoders(List<Encoder> encoders)
     {
-
         ExecutorService executor = Executors.newFixedThreadPool(encoders.size());
 
         for (Encoder encoder : encoders)
@@ -317,7 +318,6 @@ public class EncoderQueue
      */
     private static void usage()
     {
-
         System.err.println("Usage: Encode [--dry-run] <base dir> <encoder properties>");
         System.exit(-1);
     }

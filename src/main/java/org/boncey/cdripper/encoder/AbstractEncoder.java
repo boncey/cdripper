@@ -211,6 +211,7 @@ public abstract class AbstractEncoder implements Encoder
             if (!tempDest.renameTo(destFile))
             {
                 System.err.println("Unable to rename " + tempDest.getName() + " to " + destFile.getName());
+                success = false;
             }
         }
         else if (!isDryRun())
