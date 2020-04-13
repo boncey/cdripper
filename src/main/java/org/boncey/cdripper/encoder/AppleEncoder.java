@@ -90,7 +90,7 @@ public abstract class AppleEncoder extends AbstractEncoder
     @Override
     protected String getTempFileSuffix()
     {
-        return ".mp4";
+        return ".m4a";
     }
 
 }

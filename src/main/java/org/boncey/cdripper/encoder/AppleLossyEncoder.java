@@ -29,7 +29,7 @@ public class AppleLossyEncoder extends AppleEncoder
     @Override
     protected String getCodecName()
     {
-        return "alac";
+        return "libfdk_aac";
     }
 
 }
