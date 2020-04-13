@@ -21,11 +21,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class EncoderQueue
 {
-    /**
-     * Version details.
-     */
-    public static final String CVSID = "$Id: EncoderQueue.java,v 1.5 2008-11-14 11:48:58 boncey Exp $";
-
 
     /**
      * A count of tracks encoded.

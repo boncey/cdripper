@@ -13,15 +13,11 @@ import java.util.List;
  * Store CD Index files according to their CDDBID.
  * @author Darren Greaves
  * @version $Id: CDIndexer.java,v 1.2 2008-11-14 11:48:58 boncey Exp $
+ * @deprecated No longer maintained
  */
+@Deprecated
 public class CDIndexer
 {
-    /**
-     * Version details.
-     */
-    public static final String CVSID =
-        "$Id: CDIndexer.java,v 1.2 2008-11-14 11:48:58 boncey Exp $";
-
     /**
      * The CDDB entry in the CDDB file.
      */
@@ -66,18 +62,15 @@ public class CDIndexer
     private void storeCDDBFile(File srcFile, File destFile)
         throws IOException
     {
-        FileInputStream in = new FileInputStream(srcFile);
-        FileOutputStream out = new FileOutputStream(destFile);
-
-        byte[] buf = new byte[1024];
-        int len;
-        while ((len = in.read(buf)) > 0)
+        try (FileInputStream in = new FileInputStream(srcFile); FileOutputStream out= new FileOutputStream(destFile))
         {
-            out.write(buf, 0, len);
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0)
+            {
+                out.write(buf, 0, len);
+            }
         }
-
-        in.close();
-        out.close();
     }
 
     /**
@@ -93,19 +86,18 @@ public class CDIndexer
 
         if (cddbFile.canRead())
         {
-            BufferedReader in =
-                new BufferedReader(new FileReader(cddbFile));
-            String entry = in.readLine();
-            while (entry != null)
+            try (BufferedReader in = new BufferedReader(new FileReader(cddbFile)))
             {
-                if (entry.startsWith(DISCID_KEY))
+                String entry = in.readLine();
+                while (entry != null)
                 {
-                    id = entry.substring(DISCID_KEY.length());
+                    if (entry.startsWith(DISCID_KEY))
+                    {
+                        id = entry.substring(DISCID_KEY.length());
+                    }
+                    entry = in.readLine();
                 }
-                entry = in.readLine();
             }
-
-            in.close();
         }
 
         return id;

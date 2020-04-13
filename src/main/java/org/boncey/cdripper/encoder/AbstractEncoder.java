@@ -21,11 +21,6 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractEncoder implements Encoder
 {
-    /**
-     * Version details.
-     */
-    public static final String CVSID = "$Id: Encoder.java,v 1.6 2008-11-14 11:48:58 boncey Exp $";
-
 
     /**
      * How long to sleep for when waiting for encoding to finish.

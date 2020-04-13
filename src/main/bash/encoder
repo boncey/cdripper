@@ -1,0 +1,4 @@
+#!/bin/zsh
+
+java -cp cdripper.jar org.boncey.cdripper.EncoderQueue $@
+

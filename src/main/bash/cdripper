@@ -1,0 +1,3 @@
+#!/bin/sh
+
+java -cp cdripper.jar org.boncey.cdripper.CDRipper $@

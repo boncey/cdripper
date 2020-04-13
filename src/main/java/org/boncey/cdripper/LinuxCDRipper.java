@@ -66,12 +66,13 @@ public class LinuxCDRipper extends CDRipper
      * Public constructor.
      *
      * @param baseDir the directory to create the CD directory within.
+     * @param trackListing
      * @throws IOException          if unable to interact with the external processes.
      * @throws InterruptedException if this thread is interrupted.
      */
-    public LinuxCDRipper(File baseDir) throws IOException, InterruptedException
+    public LinuxCDRipper(File baseDir, List<String> trackListing) throws IOException, InterruptedException
     {
-        super(baseDir);
+        super(baseDir, trackListing);
     }
 
     @Override
@@ -109,62 +110,65 @@ public class LinuxCDRipper extends CDRipper
         Process proc = rt.exec(CD_INFO_CMD, null, dir);
         Pattern albumPattern = Pattern.compile(ALBUM_PATTERN);
         Pattern trackPattern = Pattern.compile(TRACK_PATTERN);
-        Pattern multiPattern = Pattern.compile(MULTI_CHOICE_PATTERN);
         Pattern choosePattern = Pattern.compile(CHOOSE_PATTERN);
+        Pattern multiPattern = Pattern.compile(MULTI_CHOICE_PATTERN);
         List<String> tracks = new ArrayList<>();
         String album = null;
         String artist = null;
         boolean multiple = false;
 
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(proc.getErrorStream()));
-        String line = in.readLine();
-
-        while (line != null)
+        try (BufferedReader in = new BufferedReader(
+                new InputStreamReader(proc.getErrorStream())))
         {
-            Matcher multiMatcher = multiPattern.matcher(line);
-            if (multiMatcher.matches())
+            String line = in.readLine();
+
+            while (line != null)
             {
-                multiple = true;
+                Matcher multiMatcher = multiPattern.matcher(line);
+                if (multiMatcher.matches())
+                {
+                    multiple = true;
+                }
+
+                Matcher chooseMatcher = choosePattern.matcher(line);
+                if (chooseMatcher.matches())
+                {
+                    String input;
+                    try (BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in)))
+                    {
+                        input = stdin.readLine();
+                    }
+
+                    try (BufferedWriter out = new BufferedWriter(new OutputStreamWriter(proc.getOutputStream())))
+                    {
+                        out.write(input);
+                    }
+
+                    multiple = false;
+                }
+
+                Matcher albumMatcher = albumPattern.matcher(line);
+                if (albumMatcher.matches())
+                {
+                    album = albumMatcher.group(1);
+                    artist = albumMatcher.group(2);
+                    matched = true;
+                }
+
+                Matcher trackMatcher = trackPattern.matcher(line);
+                if (trackMatcher.matches())
+                {
+                    tracks.add(trackMatcher.group(1));
+                }
+
+                if (multiple)
+                {
+                    System.out.println(line);
+                }
+
+                line = in.readLine();
             }
-
-            Matcher chooseMatcher = choosePattern.matcher(line);
-            if (chooseMatcher.matches())
-            {
-                BufferedReader stdin = new BufferedReader(
-                        new InputStreamReader(System.in));
-                String input = stdin.readLine();
-
-                BufferedWriter out = new BufferedWriter(
-                        new OutputStreamWriter(proc.getOutputStream()));
-                out.write(input);
-                out.close();
-
-                multiple = false;
-            }
-
-            Matcher albumMatcher = albumPattern.matcher(line);
-            if (albumMatcher.matches())
-            {
-                album = albumMatcher.group(1);
-                artist = albumMatcher.group(2);
-                matched = true;
-            }
-
-            Matcher trackMatcher = trackPattern.matcher(line);
-            if (trackMatcher.matches())
-            {
-                tracks.add(trackMatcher.group(1));
-            }
-
-            if (multiple)
-            {
-                System.out.println(line);
-            }
-
-            line = in.readLine();
         }
-        in.close();
 
         if (matched)
         {

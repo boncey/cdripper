@@ -17,11 +17,6 @@ import java.io.IOException;
  */
 public class Mp3Encoder extends AbstractEncoder
 {
-    /**
-     * Version details.
-     */
-    public static final String CVSID = "$Id: Mp3Encoder.java,v 1.2 2008-11-14 11:48:58 boncey Exp $";
-
 
     /**
      * The encode command.

@@ -4,19 +4,22 @@ import org.boncey.cdripper.model.CDInfo;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Class for ripping Audio CDs. Copyright (c) 2000-2005 Darren Greaves.
- * 
+ *
  * @author Darren Greaves
  * @version $Id: CDRipper.java,v 1.8 2008-11-14 11:48:58 boncey Exp $
  */
 public abstract class CDRipper
 {
-
 
     /**
      * The file extension for encoded files.
@@ -29,18 +32,25 @@ public abstract class CDRipper
      */
     private static final String TEMP_DIR = "TempDir";
 
+    private final File _baseDir;
+
+    private final List<String> _trackListing;
+
+    public CDRipper(File baseDir, List<String> trackListing)
+    {
+        _baseDir = baseDir;
+        _trackListing = trackListing;
+    }
 
     /**
-     * Public constructor.
-     * 
-     * @param baseDir the directory to create the CD directory within.
-     * @throws IOException if unable to interact with the external processes.
+     * Rip the CD.
+     *
+     * @throws IOException          if unable to interact with the external processes.
      * @throws InterruptedException if this thread is interrupted.
      */
-    public CDRipper(File baseDir) throws IOException, InterruptedException
+    public void start() throws IOException, InterruptedException
     {
-
-        File tmpDir = new File(baseDir, TEMP_DIR);
+        File tmpDir = new File(_baseDir, TEMP_DIR);
         boolean exists = tmpDir.exists() && !tmpDir.delete();
 
         if (!exists)
@@ -50,19 +60,21 @@ public abstract class CDRipper
             CDInfo cdInfo = getCDInfo(tmpDir);
             File dir;
 
-            if (cdInfo != null)
+            if (!cdInfo.recognised() && !_trackListing.isEmpty())
             {
-                System.out.println(String.format("%s by %s", cdInfo.getAlbum(), cdInfo.getArtist()));
-                dir = new File(baseDir, cdInfo.getDir());
-                rip(cdInfo, tmpDir);
+                cdInfo.fromTrackListing(_trackListing);
+            }
+            else if (!cdInfo.recognised())
+            {
+                fail("Unable to recognise disk - provide a track listing file; aborting");
+            }
 
-                dir.mkdir();
-                tmpDir.renameTo(dir);
-            }
-            else
-            {
-                fail("Unable to recognise disk; aborting");
-            }
+            System.out.println(String.format("%s by %s", cdInfo.getAlbum(), cdInfo.getArtist()));
+            dir = new File(_baseDir, cdInfo.getDir());
+            rip(cdInfo, tmpDir);
+
+            dir.mkdir();
+            tmpDir.renameTo(dir);
         }
         else
         {
@@ -73,22 +85,23 @@ public abstract class CDRipper
 
     /**
      * Fail with an error message.
-     * 
+     *
      * @param message
      * @throws IOException
      */
     private void fail(String message)
     {
         System.err.println(message);
+        System.exit(-1);
     }
 
 
     /**
      * Rip the tracks from the CD.
-     * 
-     * @param cdInfo the CD info.
+     *
+     * @param cdInfo  the CD info.
      * @param baseDir the base directory to rip and encode within.
-     * @throws IOException if unable to interact with the cdparanoia process.
+     * @throws IOException          if unable to interact with the cdparanoia process.
      * @throws InterruptedException if this thread is interrupted.
      */
     private void rip(CDInfo cdInfo, File baseDir) throws IOException, InterruptedException
@@ -104,10 +117,7 @@ public abstract class CDRipper
             File wavFile = new File(baseDir, filename);
             File tempFile = File.createTempFile("wav", null, baseDir);
             System.out.println(String.format("Ripping %s (%s)", tempFile.getName(), wavFile.getName()));
-            String[] args =
-            {
-                    getRipCommand(), "--quiet", String.valueOf(index), tempFile.getAbsolutePath()
-            };
+            String[] args = {getRipCommand(), "--quiet", String.valueOf(index), tempFile.getAbsolutePath()};
             Process proc = rt.exec(args);
             proc.waitFor();
 
@@ -129,7 +139,7 @@ public abstract class CDRipper
 
     /**
      * Strip characters that can't be used in a filename.
-     * 
+     *
      * @param filename the filename to tidy.
      * @return the tidied filename.
      */
@@ -160,30 +170,36 @@ public abstract class CDRipper
 
     /**
      * Rip and encode the CD.
-     * 
+     *
      * @param args the base dir.
      */
-    public static void main(String[] args)
+    public static void main(String[] args) throws Exception
     {
 
         if (args.length < 1)
         {
-            System.err.println("Usage: CDRipper <base dir>");
+            System.err.println("Usage: CDRipper <base dir> [track names text file]");
             System.exit(-1);
         }
 
         File baseDir = new File(args[0]);
         if (!baseDir.canRead() || !baseDir.isDirectory())
         {
-            System.err.println("Unable to access " + baseDir + " as a directory");
+            System.err.printf("Unable to access %s as a directory%n", baseDir);
             System.exit(-1);
+        }
+
+        List<String> trackListing = Collections.EMPTY_LIST;
+        if (args.length > 1)
+        {
+            trackListing = Files.readAllLines(Paths.get(args[1]));
         }
 
         try
         {
-            @SuppressWarnings("unused")
             // TODO Select based on OS
-            CDRipper cdr = new MacOSRipper(baseDir);
+            CDRipper cdr = new MacOSRipper(baseDir, trackListing);
+            cdr.start();
         }
         catch (Exception e)
         {

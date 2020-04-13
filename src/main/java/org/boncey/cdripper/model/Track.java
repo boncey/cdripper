@@ -13,11 +13,6 @@ import java.util.regex.Pattern;
  */
 public class Track
 {
-    /**
-     * Version details.
-     */
-    public static final String CVSID = "$Id: Track.java,v 1.4 2008-11-14 11:48:58 boncey Exp $";
-
 
     /**
      * The track's wav file.
