@@ -49,4 +49,4 @@ Ripping an unrecognised CD (details not in CDDB) - see src/main/resources/exampl
 
 See `encoder` shell script in `/src/main/bash` as an example shell script to exec the Java process.
 
-    encoder ~/Music/wav my-encoder.properties
+    encoder ~/Music/ripped my-encoder.properties
