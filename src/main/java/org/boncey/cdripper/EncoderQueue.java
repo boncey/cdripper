@@ -268,8 +268,8 @@ public class EncoderQueue
             List<Encoder> encoders = new EncoderLoader().loadEncoders(props, monitor);
             ExecutorService executor = executeEncoders(encoders);
             EncoderQueue encoderQueue = new EncoderQueue(baseDir, encoders, monitor, dryRun);
-            executor.awaitTermination(30, TimeUnit.MINUTES);
             executor.shutdown();
+            executor.awaitTermination(30, TimeUnit.MINUTES);
 
             encoderQueue.cleanup(baseDir, dryRun);
             if (encoderQueue.getTracksEncoded() == 0)
