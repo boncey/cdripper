@@ -2,12 +2,7 @@ package org.boncey.cdripper;
 
 import org.boncey.cdripper.model.CDInfo;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -25,7 +20,7 @@ public class LinuxCDRipper extends CDRipper
     /**
      * The command for getting CD info.
      */
-    private static final String CD_INFO_CMD = "cdda2wav -L 0 -J -v titles";
+    private static final String CD_INFO_CMD = "cdda2wav -D /dev/cdrom -cddbp-server=gnudb.gnudb.org -cddbp-port=8880 -L 0 -J -v titles";
 
     /**
      * The command for getting CD info.
